@@ -1,0 +1,37 @@
+version: '3'
+
+services:
+  nginx:
+    image: "nginx:latest"
+    ports: 
+      - "8000:8000"
+    networks:
+      - django
+    volumes:
+      - ./config/nginx/django.conf:/etc/nginx/conf.d/default.conf
+    links:
+      - web:web 
+    restart: always
+
+  db:
+    image: "postgres:latest"
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    networks:
+      - django
+    restart: always
+  
+  web:
+    build:
+      context: django_blog/
+    networks:
+      - django
+    expose:
+      - "8000"
+    links:
+      - db:db
+    command: bash -c "python3 manage.py makemigrations && python3 manage.py migrate && python3 manage.py runserver 0.0.0.0:8000"    
+    restart: always
+
+networks:
+  django:
